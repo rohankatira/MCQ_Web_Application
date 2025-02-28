@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JavaScript Quiz</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .quiz-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 800px;
+            position: relative;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .timer {
+            background: #ff4757;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 25px;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(255,71,87,0.3);
+        }
+
+        .pagination {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .page-item {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: default;
+            background: #f1f2f6;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        .page-item.active {
+            background: #2d98da;
+            color: white;
+            transform: scale(1.1);
+        }
+
+        .page-item.answered {
+            background: #20bf6b;
+            color: white;
+        }
+
+        .question-container {
+            margin-bottom: 2rem;
+        }
+
+        .question-text {
+            font-size: 1.4rem;
+            color: #2d3436;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+            font-weight: 600;
+        }
+
+        .options-container {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .option-btn {
+            padding: 1rem 1.5rem;
+            border: 2px solid #dfe6e9;
+            border-radius: 12px;
+            background: white;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            color: #2d3436;
+        }
+
+        .option-btn:hover:not([disabled]) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-color: #2d98da;
+        }
+
+        .option-btn.correct {
+            background: #20bf6b;
+            border-color: #20bf6b;
+            color: white;
+        }
+
+        .option-btn.incorrect {
+            background: #ff4757;
+            border-color: #ff4757;
+            color: white;
+        }
+
+        .next-btn {
+            background: #2d98da;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            float: right;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(45,152,218,0.3);
+        }
+
+        .next-btn:hover {
+            transform: translateY(-2px);
+            background: #227093;
+        }
+
+        .score-container {
+            text-align: center;
+            padding:  2rem;
+        }
+
+        .score-text {
+            font-size: 2rem;
+            color: #2d3436;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: #dfe6e9;
+            border-radius: 2px;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .progress {
+            height: 100%;
+            background: #2d98da;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        @media (max-width: 768px) {
+            .quiz-container {
+                padding: 1.5rem;
+            }
+            
+            .question-text {
+                font-size: 1.2rem;
+            }
+            
+            .option-btn {
+                padding: 0.8rem 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="quiz-container">
+        <div class="header">
+            <div class="pagination" id="pagination"></div>
+            <div class="timer" id="timer">60s</div>
+        </div>
+        <div class="progress-bar">
+            <div class="progress" id="progress"></div>
+        </div>
+        
+        <div class="question-container">
+            <h2 class="question-text" id="question">Question</h2>
+            <div class="options-container" id="options"></div>
+        </div>
+        
+        <button class="next-btn hidden" id="next-btn">Next Question →</button>
+        
+        <div class="score-container hidden" id="score-container">
+            <div class="score-text">
+                Your Score: <span id="score">0</span>/<span id="total">30</span>
+            </div>
+            <button class="next-btn" onclick="location.reload()">Try Again</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+    {
+        question: "Which keyword is used to declare a variable in JavaScript?",
+        options: ["var", "let", "const", "All of the above"],
+        correct: 3
+    },
+    {
+        question: "What does 'DOM' stand for?",
+        options: ["Document Object Model", "Data Object Management", "Digital Output Module", "Display Object Model"],
+        correct: 0
+    },
+    {
+        question: "Which method is used to add an element to the end of an array?",
+        options: ["push()", "pop()", "shift()", "unshift()"],
+        correct: 0
+    },
+    {
+        question: "What is the result of typeof null in JavaScript?",
+        options: ["object", "null", "undefined", "string"],
+        correct: 0
+    },
+    {
+        question: "Which of these is a JavaScript framework?",
+        options: ["React", "Laravel", "Django", "Flask"],
+        correct: 0
+    },
+    {
+        question: "What is a closure in JavaScript?",
+        options: ["A function with access to its outer function's scope", 
+                 "A way to close variables",
+                 "A type of loop",
+                 "A method to close the browser window"],
+        correct: 0
+    },
+    {
+        question: "What does 'NaN' stand for?",
+        options: ["Not a Number", "Not a Node", "New Abstract Number", "No assigned Number"],
+        correct: 0
+    },
+    {
+        question: "Which method converts JSON string to a JavaScript object?",
+        options: ["JSON.parse()", "JSON.stringify()", "JSON.convert()", "JSON.toObject()"],
+        correct: 0
+    },
+    {
+        question: "What is the purpose of 'use strict' in JavaScript?",
+        options: ["Enforces stricter parsing and error handling", 
+                 "Makes code run faster",
+                 "Enables experimental features",
+                 "Automatically fixes errors"],
+        correct: 0
+    },
+    {
+        question: "Which symbol is used for comments in JavaScript?",
+        options: ["//", "##", "%%", "--"],
+        correct: 0
+    },
+    {
+        question: "What is the output of 2 + '2' in JavaScript?",
+        options: ["'22'", "4", "NaN", "Undefined"],
+        correct: 0
+    },
+    {
+        question: "Which method removes the last element from an array?",
+        options: ["pop()", "push()", "shift()", "slice()"],
+        correct: 0
+    },
+    {
+        question: "What is the purpose of the 'this' keyword in JavaScript?",
+        options: ["Refers to the current object", 
+                 "Refers to the previous object",
+                 "Refers to any random object",
+                 "Refers to the parent object"],
+        correct: 0
+    },
+    {
+        question: "Which function is used to execute code after a specified delay?",
+        options: ["setTimeout()", "delay()", "wait()", "pause()"],
+        correct: 0
+    },
+    {
+        question: "What does ES6 stand for?",
+        options: ["ECMAScript 6", 
+                 "Extended JavaScript 6",
+                 "External Script 6",
+                 "Enhanced Syntax 6"],
+        correct: 0
+    },
+    {
+        question: "Which operator is used for strict equality in JavaScript?",
+        options: ["===", "==", "=", "!=="],
+        correct: 0
+    },
+    {
+        question: "What is hoisting in JavaScript?",
+        options: ["Moving declarations to the top of their scope", 
+                 "Lifting variables physically in code",
+                 "A type of loop",
+                 "A design pattern"],
+        correct: 0
+    },
+    {
+        question: "Which method creates a new array with filtered elements?",
+        options: ["filter()", "map()", "reduce()", "forEach()"],
+        correct: 0
+    },
+    {
+        question: "What is the purpose of the 'async' keyword?",
+        options: ["To define an asynchronous function", 
+                 "To pause code execution",
+                 "To make code run synchronously",
+                 "To create parallel threads"],
+        correct: 0
+    },
+    {
+        question: "Which object is the top-level object in a browser environment?",
+        options: ["window", "document", "global", "browser"],
+        correct: 0
+    },
+    {
+        question: "What does the 'fetch' API return?",
+        options: ["A Promise", 
+                 "Immediate data",
+                 "A callback function",
+                 "An event"],
+        correct: 0
+    },
+    {
+        question: "Which method is used to handle promises?",
+        options: [".then()", ".catch()", ".finally()", "All of the above"],
+        correct: 3
+    },
+    {
+        question: "What is the purpose of the 'event.preventDefault()' method?",
+        options: ["Prevent default browser behavior", 
+                 "Stop event propagation",
+                 "Remove event listeners",
+                 "Pause event execution"],
+        correct: 0
+    },
+    {
+        question: "Which symbol is used for template literals?",
+        options: ["` (backtick)", "' (single quote)", "\" (double quote)", "/ (slash)"],
+        correct: 0
+    },
+    {
+        question: "What is the output of console.log(0.1 + 0.2 === 0.3)?",
+        options: ["false", "true", "undefined", "NaN"],
+        correct: 0
+    },
+    {
+        question: "Which method creates a new array with modified elements?",
+        options: ["map()", "filter()", "reduce()", "some()"],
+        correct: 0
+    },
+    {
+        question: "What is the purpose of the 'arguments' object?",
+        options: ["Contains all arguments passed to a function", 
+                 "Holds function return values",
+                 "Stores global variables",
+                 "Manages function parameters"],
+        correct: 0
+    },
+    {
+        question: "Which method converts a string to lowercase?",
+        options: ["toLowerCase()", "toLower()", "lowerCase()", "convertLower()"],
+        correct: 0
+    },
+    {
+        question: "What is the purpose of the 'finally' block in try/catch?",
+        options: ["Execute code regardless of try/catch outcome", 
+                 "Handle errors",
+                 "Return values",
+                 "Skip error handling"],
+        correct: 0
+    },
+    {
+        question: "Which operator is used for exponentiation?",
+        options: ["**", "^^", "%%", "//"],
+        correct: 0
+    },
+    {
+        question: "What is the purpose of the 'localStorage' object?",
+        options: ["Store data persistently in the browser", 
+                 "Store session-only data",
+                 "Manage cookies",
+                 "Handle server-side storage"],
+        correct: 0
+    }
+];
+
+        let currentQuestion = 0;
+        let score = 0;
+        const totalQuestions = questions.length;
+        const timerDuration = 60; // seconds
+        let timer;
+
+        function startTimer() {
+            let timeLeft = timerDuration;
+            document.getElementById('timer').innerText = `${timeLeft}s`;
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer').innerText = `${timeLeft}s`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    if (confirm("Time's up! Do you want to proceed to the next question?")) {
+                        selectOption(null, questions[currentQuestion].answer); // Automatically select the correct answer
+                    }
+                }
+            }, 1000);
+        }
+
+        function showQuestion(index) {
+            const questionData = questions[index];
+            document.getElementById('question').innerText = questionData.question;
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.innerText = option;
+                button.classList.add('option-btn');
+                button.onclick = () => selectOption(option, questionData.answer);
+                optionsContainer.appendChild(button);
+            });
+            updatePagination();
+            updateProgress();
+        }
+
+        function selectOption(selected, correct) {
+            const options = document.querySelectorAll('.option-btn');
+            options.forEach(option => {
+                option.disabled = true;
+                if (option.innerText === correct) {
+                    option.classList.add('correct');
+                } else if (option.innerText === selected) {
+                    option.classList.add('incorrect');
+                }
+            });
+            if (selected === correct) {
+                score++;
+            }
+            currentQuestion++;
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            questions.forEach((_, index) => {
+                const pageItem = document.createElement('div');
+                pageItem.classList.add('page-item');
+                pageItem.innerText = index + 1;
+                if (index === currentQuestion) {
+                    pageItem.classList.add('active');
+                } else if (index < currentQuestion) {
+                    pageItem.classList.add('answered');
+                }
+                pagination.appendChild(pageItem);
+            });
+        }
+
+        function updateProgress() {
+            const progress = (currentQuestion / totalQuestions) * 100;
+            document.getElementById('progress'). style.width = `${progress}%`;
+        }
+
+        function showResults() {
+            clearInterval(timer);
+            document.getElementById('score-container').classList.remove('hidden');
+            document.getElementById('score').innerText = score;
+            document.getElementById('total').innerText = totalQuestions;
+            document.querySelector('.quiz-container').classList.add('hidden');
+        }
+
+        function initializeQuiz() {
+            if (confirm("Do you want to start the quiz?")) {
+                document.getElementById('progress').style.width = '0%';
+                showQuestion(currentQuestion);
+                startTimer();
+            } else {
+                alert("Quiz not started. Refresh the page to try again.");
+            }
+        }
+
+        document.getElementById('next-btn').onclick = () => {
+            if (currentQuestion < totalQuestions) {
+                showQuestion(currentQuestion);
+                document.getElementById('next-btn').classList.add('hidden');
+                startTimer(); // Restart the timer for the next question
+            } else {
+                showResults();
+            }
+        };
+
+        window.onload = initializeQuiz;
+    </script>
+</body>
+</html>
